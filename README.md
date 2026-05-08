@@ -2,7 +2,7 @@
 
 A self-hosted annual budget planner. Track income and expenses across custom sections with monthly breakdowns, running balances, and cumulative totals.
 
-![Budgety screenshot](screenshot.png)
+![Budgety screenshot](resources/screenshot.png)
 
 ## Docker deployment
 

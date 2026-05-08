@@ -1,9 +1,37 @@
-FROM node:22-alpine
-LABEL org.opencontainers.image.source="https://hub.docker.com/r/larsmikki/budgety"
-LABEL org.opencontainers.image.description="Simple self-hosted annual budget planner"
-LABEL org.opencontainers.image.licenses="MIT"
+FROM node:20-alpine AS builder
+
 WORKDIR /app
-COPY serve.js index.html favicon.svg ./
+
+COPY package.json package-lock.json ./
+COPY server/package.json server/
+COPY client/package.json client/
+RUN npm ci
+
+COPY server/ server/
+COPY client/ client/
+RUN npm run build -w client
+RUN npm run build -w server
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY server/package.json server/
+RUN npm ci -w server --omit=dev
+
+COPY --from=builder /app/server/dist server/dist
+COPY --from=builder /app/client/dist client/dist
+
 RUN mkdir -p /app/data
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV DATA_DIR=/app/data
+
 EXPOSE 3000
-CMD ["node", "serve.js"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --spider -q http://localhost:3000/api/health || exit 1
+
+CMD ["node", "server/dist/index.js"]

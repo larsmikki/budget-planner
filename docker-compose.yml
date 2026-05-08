@@ -1,7 +1,6 @@
-version: "3"
 services:
   budgety:
-    image: budgety:latest
+    image: larsmikki/budgety:latest
     container_name: budgety
     ports:
       - "3000:3000"
@@ -9,9 +8,9 @@ services:
       - budgety-data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
-      interval: 300s
-      timeout: 5s
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 5m
+      timeout: 10s
       retries: 3
 
 volumes:

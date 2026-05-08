@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-1px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(22, 163, 74, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 163, 74, 0.5);
+}
+
+/* Focus ring reset */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Budget table styles */
+.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  table-layout: fixed;
+}
+.budget-table colgroup .col-post { width: 200px; }
+.budget-table colgroup .col-month { width: calc((100% - 200px - 100px) / 12); }
+.budget-table colgroup .col-total { width: 100px; }
+.budget-table th,
+.budget-table td {
+  padding: 8px 12px;
+  text-align: right;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.budget-table th {
+  background: var(--surface);
+  color: var(--text2);
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+.budget-table td:first-child,
+.budget-table th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--surface2);
+  z-index: 2;
+  min-width: 200px;
+}
+.budget-table th:first-child { background: var(--surface); z-index: 3; }
+.budget-table td:last-child,
+.budget-table th:last-child {
+  font-weight: 600;
+  background: var(--surface);
+  min-width: 90px;
+}
+.budget-table tr:hover td { background: rgba(22, 163, 74, 0.04); }
+.budget-table tr:hover td:first-child { background: var(--surface2); }
+.budget-table tr.total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+.budget-table tr.income-row td { color: var(--green); }
+.budget-table tr.balance-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--accent);
+  font-size: 0.9rem;
+}
+.cell-zero { color: var(--text2); }
+.editable-cell { cursor: pointer; position: relative; }
+.editable-cell:hover { background: rgba(22, 163, 74, 0.08) !important; }
+.inline-edit {
+  width: 70px;
+  padding: 2px 4px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.85rem;
+  text-align: right;
+  outline: none;
+}
+.post-actions { display: flex; gap: 2px; visibility: hidden; }
+.budget-table tr:hover .post-actions { visibility: visible; }
+tr.dragging { opacity: 0.4; }
+tr.drag-over td { box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* Toggle switch */
+.toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-input:checked + .toggle-slider {
+  background: var(--accent);
+}
+.toggle-input:checked + .toggle-slider::after {
+  transform: translateX(20px);
+}
