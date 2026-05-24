@@ -8,3 +8,6 @@ data/
 node_modules/
 *.log
 .env
+
+# Build output
+dist/
