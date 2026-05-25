@@ -4,16 +4,26 @@ A self-hosted annual budget planner. Track income and expenses across custom sec
 
 ![Budgety screenshot](resources/screenshot.png)
 
-## Docker deployment
+## Getting started
 
-### Docker Hub
+Pick whichever install path matches your setup. All paths land on [http://localhost:3000](http://localhost:3000). Data is persisted to `budget.json` (in the Docker volume or `./data/` for local installs).
 
-The image is published to Docker Hub as `larsmikki/budgety:latest`.
+### 1. Docker (Docker Desktop, NAS, or any Docker server)
 
-**docker-compose.yml:**
+Works on Synology, Unraid, TrueNAS, QNAP, Proxmox, or a plain Docker host.
+
+```bash
+docker run -d \
+  --name budgety \
+  -p 3000:3000 \
+  -v budgety-data:/app/data \
+  --restart unless-stopped \
+  larsmikki/budgety:latest
+```
+
+Or with Compose:
 
 ```yaml
-version: "3"
 services:
   budgety:
     image: larsmikki/budgety:latest
@@ -23,24 +33,55 @@ services:
     volumes:
       - budgety-data:/app/data
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
-      interval: 300s
-      timeout: 5s
-      retries: 3
 
 volumes:
   budgety-data:
 ```
 
-Data is persisted in the `budgety-data` volume at `/app/data/budget.json`.
+To build the image locally instead: `docker build -t budgety . && docker run -p 3000:3000 -v budgety-data:/app/data budgety`.
 
-### Build your own image
+### 2. Local install on Windows
+
+Requires [Git for Windows](https://git-scm.com/download/win) and [Node.js 20+](https://nodejs.org/).
+
+```powershell
+git clone https://github.com/larsmikki/budgety.git
+cd budgety
+npm install
+npm run dev
+```
+
+For a production build: `npm run build && npm start`.
+
+### 3. Local install on macOS
 
 ```bash
-docker build -t budgety .
-docker run -p 3000:3000 -v budgety-data:/app/data budgety
+brew install node git
+git clone https://github.com/larsmikki/budgety.git
+cd budgety
+npm install
+npm run dev
 ```
+
+For a production build: `npm run build && npm start`.
+
+### 4. Local install on Linux
+
+Debian/Ubuntu:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs git
+
+git clone https://github.com/larsmikki/budgety.git
+cd budgety
+npm install
+npm run dev
+```
+
+On Fedora/RHEL use `dnf install nodejs git`; on Arch use `pacman -S nodejs npm git`.
+
+For a production build: `npm run build && npm start`.
 
 ## Features
 

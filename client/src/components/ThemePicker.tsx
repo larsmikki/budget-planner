@@ -10,20 +10,18 @@ export default function ThemePicker({ onSelect }: { onSelect?: (name: string) =>
           <button
             key={t.name}
             onClick={() => { setThemeByName(t.name); onSelect?.(t.name) }}
-            className="flex flex-col items-center p-1.5 rounded-xl transition-all"
+            className="flex flex-col items-center rounded-xl p-1.5 transition-opacity hover:opacity-80"
             style={{
               border: isActive ? `2px solid ${theme.accent}` : `2px solid transparent`,
               background: isActive ? `${theme.accent}12` : 'transparent',
             }}
           >
-            <div className="relative w-full aspect-square rounded-lg overflow-hidden flex">
+            <div className="flex aspect-square w-full overflow-hidden rounded-lg" style={{ border: `1px solid ${t.border}` }}>
               {t.previewColors.map((c, i) => (
                 <div key={i} className="flex-1" style={{ background: c }} />
               ))}
-              <div className="absolute bottom-0 left-0 right-0 text-center" style={{ padding: '4px 5px', background: 'rgba(0,0,0,0.38)' }}>
-                <span style={{ fontSize: '9px', fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>{t.name}</span>
-              </div>
             </div>
+            <span className="mt-1 text-[10px] font-medium text-text2">{t.name}</span>
           </button>
         )
       })}

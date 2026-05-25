@@ -8,6 +8,7 @@ import BudgetSection from '@/components/BudgetSection'
 import PostModal from '@/components/PostModal'
 import SectionModal from '@/components/SectionModal'
 import QuickSetupModal from '@/components/QuickSetupModal'
+import { Button, Surface } from '@/components/ui'
 
 export default function FrontPage() {
   const { theme } = useTheme()
@@ -66,44 +67,21 @@ export default function FrontPage() {
   const expTotal = expenseMonths.reduce((a, b) => a + b, 0)
 
   return (
-    <div style={{ padding: '24px 32px' }}>
+    <div>
       <SummaryBar />
 
       {showSetupBanner && (
-        <div
-          style={{
-            background: 'linear-gradient(135deg, rgba(22,163,74,0.1), rgba(22,163,74,0.05))',
-            border: '1px solid rgba(22,163,74,0.2)',
-            borderRadius: 8,
-            padding: '20px 24px',
-            marginBottom: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+        <Surface
+          className="mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
+          style={{ backgroundImage: `linear-gradient(135deg, ${theme.accent}14, ${theme.accent}08)` }}
         >
-          <p style={{ color: theme.text2, fontSize: '0.9rem' }}>
-            Welcome! Get started by adding{' '}
+          <p className="text-sm text-text2">
+            Add{' '}
             <span style={{ color: theme.accent, fontWeight: 600 }}>income sources</span> and{' '}
-            <span style={{ color: theme.accent, fontWeight: 600 }}>budget posts</span>.
+            <span style={{ color: theme.accent, fontWeight: 600 }}>budget posts</span> to start planning.
           </p>
-          <button
-            style={{
-              padding: '8px 16px',
-              background: theme.gradient,
-              border: 'none',
-              borderRadius: 8,
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontFamily: 'inherit',
-              fontWeight: 500,
-            }}
-            onClick={() => setQuickSetupOpen(true)}
-          >
-            Quick Setup
-          </button>
-        </div>
+          <Button variant="primary" onClick={() => setQuickSetupOpen(true)}>Quick setup</Button>
+        </Surface>
       )}
 
       {sorted.map(section => (
@@ -118,21 +96,7 @@ export default function FrontPage() {
       ))}
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-        <button
-          style={{
-            padding: '8px 16px',
-            background: theme.surface2,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 8,
-            color: theme.text,
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontFamily: 'inherit',
-          }}
-          onClick={openAddSection}
-        >
-          + Add Section
-        </button>
+        <Button onClick={openAddSection}>Add section</Button>
       </div>
 
       {/* Monthly Balance Table */}

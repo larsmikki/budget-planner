@@ -1,12 +1,17 @@
 {
   "name": "Budgety",
   "short_name": "Budgety",
-  "description": "Annual budget planner — self-hosted, private, free",
+  "description": "Annual budget planner - self-hosted, private, free",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#16a34a",
   "icons": [
-    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

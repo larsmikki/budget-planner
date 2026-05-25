@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
 import Footer from '@/components/Footer'
+import { Pill } from '@/components/ui'
 
 const LogoMark = () => (
   <img src="/favicon.svg" width={28} height={28} alt="Budgety" className="shrink-0" />
@@ -33,12 +34,9 @@ export default function Layout() {
           </Link>
           <nav className="flex items-center gap-2">
             {showFictiveBadge && (
-              <span
-                className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: theme.yellow, color: '#000', opacity: 0.85 }}
-              >
-                🎨 Demo mode
-              </span>
+              <Pill active={false} style={{ color: theme.yellow, borderColor: `${theme.yellow}40`, background: `${theme.yellow}15` }}>
+                Demo mode
+              </Pill>
             )}
             <Link
               to="/settings"

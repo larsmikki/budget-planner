@@ -1,6 +1,7 @@
 import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
 import { getMonthlyAmounts, fmt } from '@/utils'
+import { Surface } from '@/components/ui'
 
 export default function SummaryBar() {
   const { theme } = useTheme()
@@ -23,31 +24,21 @@ export default function SummaryBar() {
 
   const yearBalance = totalIncome - totalExpenses
 
-  const cardStyle = {
-    background: theme.surface,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: '16px 24px',
-    minWidth: 180,
-    flex: 1,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-  }
-
   return (
     <div className="flex gap-4 mb-6 flex-wrap">
-      <div className="card-hover" style={cardStyle}>
+      <Surface className="card-hover min-w-[180px] flex-1 rounded-xl p-5" style={{ boxShadow: 'var(--shadow-card-soft)' }}>
         <div className="text-sm mb-1" style={{ color: theme.text2 }}>Total Income</div>
         <div className="text-2xl font-bold" style={{ color: theme.green }}>
           {fmt(totalIncome, state.settings)}
         </div>
-      </div>
-      <div className="card-hover" style={cardStyle}>
+      </Surface>
+      <Surface className="card-hover min-w-[180px] flex-1 rounded-xl p-5" style={{ boxShadow: 'var(--shadow-card-soft)' }}>
         <div className="text-sm mb-1" style={{ color: theme.text2 }}>Total Expenses</div>
         <div className="text-2xl font-bold" style={{ color: theme.text }}>
           {fmt(totalExpenses, state.settings)}
         </div>
-      </div>
-      <div className="card-hover" style={cardStyle}>
+      </Surface>
+      <Surface className="card-hover min-w-[180px] flex-1 rounded-xl p-5" style={{ boxShadow: 'var(--shadow-card-soft)' }}>
         <div className="text-sm mb-1" style={{ color: theme.text2 }}>Year Balance</div>
         <div
           className="text-2xl font-bold"
@@ -55,7 +46,7 @@ export default function SummaryBar() {
         >
           {yearBalance !== 0 ? (yearBalance >= 0 ? '+' : '') + fmt(yearBalance, state.settings) : fmt(0, state.settings)}
         </div>
-      </div>
+      </Surface>
     </div>
   )
 }

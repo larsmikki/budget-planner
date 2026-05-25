@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
 import { getMonthlyAmounts, fmt } from '@/utils'
 import { MONTHS } from '@/data/constants'
+import { Button, ConfirmDialog, Pill } from '@/components/ui'
 
 interface BudgetSectionProps {
   section: Section
@@ -35,17 +36,15 @@ export default function BudgetSection({
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [editingCell, setEditingCell] = useState<{ postId: string; monthIdx: number } | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [customScheduleTarget, setCustomScheduleTarget] = useState<{ post: Post; monthIdx: number } | null>(null)
+  const [deletePostId, setDeletePostId] = useState<string | null>(null)
+
+  const sectionTotal = posts.reduce((sum, post) => sum + getMonthlyAmounts(post).reduce((a, b) => a + b, 0), 0)
 
   const toggleCollapse = () => {
     updateState({ collapsed: { ...state.collapsed, [section.id]: !isCollapsed } })
   }
 
-  // Compute section total
-  const sectionTotal = posts.reduce((sum, post) => {
-    return sum + getMonthlyAmounts(post).reduce((a, b) => a + b, 0)
-  }, 0)
-
-  // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent<HTMLTableRowElement>, postId: string) => {
     dragPostIdRef.current = postId
     e.currentTarget.classList.add('dragging')
@@ -65,10 +64,6 @@ export default function BudgetSection({
     setDragOverId(targetId)
   }
 
-  const handleDragLeave = () => {
-    setDragOverId(null)
-  }
-
   const handleDrop = (e: React.DragEvent<HTMLTableRowElement>, targetId: string) => {
     e.preventDefault()
     setDragOverId(null)
@@ -84,140 +79,94 @@ export default function BudgetSection({
     const [moved] = reordered.splice(fromIdx, 1)
     reordered.splice(toIdx, 0, moved)
 
-    // Rebuild posts preserving order across all sections
     const orderedPosts: Post[] = []
     state.sections.forEach(sec => {
-      if (sec.id === section.id) {
-        orderedPosts.push(...reordered)
-      } else {
-        orderedPosts.push(...state.posts.filter(p => p.sectionId === sec.id))
-      }
+      orderedPosts.push(...(sec.id === section.id ? reordered : state.posts.filter(p => p.sectionId === sec.id)))
     })
     updateState({ posts: orderedPosts })
   }
 
-  // Inline editing
   const handleDblClick = (post: Post, monthIdx: number) => {
     if (post.frequency !== 'custom') {
-      if (!confirm(`This will change "${post.name}" to a custom schedule so you can set individual month amounts. Continue?`)) return
-      const oldAmounts = getMonthlyAmounts(post)
-      const customMonths: number[] = []
-      for (let i = 0; i < 12; i++) { if (oldAmounts[i] > 0) customMonths.push(i) }
-      const updatedPosts = state.posts.map(p =>
-        p.id === post.id ? { ...p, frequency: 'custom' as const, customMonths } : p
-      )
-      updateState({ posts: updatedPosts })
+      setCustomScheduleTarget({ post, monthIdx })
+      return
     }
     const currentAmounts = getMonthlyAmounts(post)
     setEditValue(currentAmounts[monthIdx] > 0 ? String(currentAmounts[monthIdx]) : '')
     setEditingCell({ postId: post.id, monthIdx })
   }
 
+  const convertToCustomSchedule = () => {
+    if (!customScheduleTarget) return
+    const { post, monthIdx } = customScheduleTarget
+    const oldAmounts = getMonthlyAmounts(post)
+    const customMonths = oldAmounts.flatMap((amount, i) => amount > 0 ? [i] : [])
+    updateState({
+      posts: state.posts.map(p => p.id === post.id ? { ...p, frequency: 'custom' as const, customMonths } : p),
+    })
+    setEditValue(oldAmounts[monthIdx] > 0 ? String(oldAmounts[monthIdx]) : '')
+    setEditingCell({ postId: post.id, monthIdx })
+  }
+
   const handleEditFinish = (post: Post, monthIdx: number) => {
     const newVal = parseFloat(editValue) || 0
-    let updatedPost: Post
-    if (newVal > 0) {
-      const customMonths = post.customMonths.includes(monthIdx)
-        ? post.customMonths
-        : [...post.customMonths, monthIdx].sort((a, b) => a - b)
-      updatedPost = { ...post, amount: newVal, frequency: 'custom', customMonths }
-    } else {
-      const customMonths = post.customMonths.filter(m => m !== monthIdx)
-      updatedPost = { ...post, frequency: 'custom', customMonths }
-    }
-    const updatedPosts = state.posts.map(p => p.id === post.id ? updatedPost : p)
-    updateState({ posts: updatedPosts })
+    const customMonths = newVal > 0
+      ? [...new Set([...post.customMonths, monthIdx])].sort((a, b) => a - b)
+      : post.customMonths.filter(m => m !== monthIdx)
+    const updatedPost = { ...post, amount: newVal > 0 ? newVal : post.amount, frequency: 'custom' as const, customMonths }
+    updateState({ posts: state.posts.map(p => p.id === post.id ? updatedPost : p) })
     setEditingCell(null)
     setEditValue('')
   }
 
   const handleDeletePost = (postId: string) => {
-    if (confirm('Delete this budget post?')) {
-      updateState({ posts: state.posts.filter(p => p.id !== postId) })
-    }
+    setDeletePostId(postId)
   }
 
-  const headerBg = section.color || theme.surface
-  const headerStyle = {
-    background: headerBg,
-    border: `1px solid ${theme.border}`,
-    borderRadius: isCollapsed ? 12 : '12px 12px 0 0',
-    padding: '10px 16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    cursor: 'pointer',
-    userSelect: 'none' as const,
-  }
-
-  const btnIconStyle = {
-    width: 28,
-    height: 28,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'transparent',
-    border: `1px solid ${theme.border}`,
-    color: theme.text2,
-    borderRadius: 8,
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-    fontFamily: 'inherit',
+  const confirmDeletePost = () => {
+    if (!deletePostId) return
+    updateState({ posts: state.posts.filter(p => p.id !== deletePostId) })
   }
 
   return (
     <div className="mb-6">
-      <div style={headerStyle} onClick={toggleCollapse}>
+      <div
+        className="flex cursor-pointer select-none items-center justify-between px-4 py-2.5"
+        style={{
+          background: section.color || theme.surface,
+          border: `1px solid ${theme.border}`,
+          borderRadius: isCollapsed ? 12 : '12px 12px 0 0',
+        }}
+        onClick={toggleCollapse}
+      >
         <h2 className="flex items-center gap-2 text-base font-semibold" style={{ color: theme.text }}>
           <span
-            style={{
-              display: 'inline-block',
-              transition: 'transform 0.2s',
-              transform: isCollapsed ? 'rotate(-90deg)' : 'none',
-              color: theme.text2,
-              fontSize: '0.8rem',
-            }}
+            className="inline-block transition-transform"
+            style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', color: theme.text2 }}
           >
             ▼
           </span>
           {section.name}
-          <span
-            className="text-xs px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide"
+          <Pill
+            active={false}
             style={
               section.type === 'income'
-                ? { background: `${theme.green}22`, color: theme.green }
-                : { background: `${theme.red}18`, color: theme.red }
+                ? { background: `${theme.green}22`, color: theme.green, borderColor: `${theme.green}40` }
+                : { background: `${theme.red}18`, color: theme.red, borderColor: `${theme.red}35` }
             }
           >
             {section.type}
-          </span>
+          </Pill>
         </h2>
         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-          <span className="text-sm" style={{ color: theme.text2 }}>
-            {sectionTotal !== 0 ? fmt(sectionTotal, state.settings) : ''}
-          </span>
-          <button
-            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md text-white"
-            style={{ background: theme.gradient, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            onClick={() => onAddPost(section.id)}
-          >
-            + Add
-          </button>
-          <button style={btnIconStyle} onClick={() => onEditSection(section.id)} title="Edit section">
-            ✎
-          </button>
+          <span className="text-sm text-text2">{sectionTotal !== 0 ? fmt(sectionTotal, state.settings) : ''}</span>
+          <Button size="sm" variant="primary" onClick={() => onAddPost(section.id)}>Add</Button>
+          <Button size="sm" variant="ghost" onClick={() => onEditSection(section.id)} title="Edit section">Edit</Button>
         </div>
       </div>
 
       {!isCollapsed && (
-        <div
-          style={{
-            border: `1px solid ${theme.border}`,
-            borderTop: 'none',
-            borderRadius: '0 0 8px 8px',
-            overflowX: 'auto',
-          }}
-        >
+        <div style={{ border: `1px solid ${theme.border}`, borderTop: 'none', borderRadius: '0 0 8px 8px', overflowX: 'auto' }}>
           <table className="budget-table">
             <colgroup>
               <col className="col-post" />
@@ -228,14 +177,14 @@ export default function BudgetSection({
               <tr>
                 <th>Post</th>
                 {MONTHS.map(m => <th key={m}>{m}</th>)}
-                <th>Year Total</th>
+                <th>Year total</th>
               </tr>
             </thead>
             <tbody>
               {posts.length === 0 ? (
                 <tr>
                   <td colSpan={14} style={{ textAlign: 'center', padding: 24, color: theme.text2 }}>
-                    No posts yet. Click &quot;+ Add&quot; to create one.
+                    No posts yet. Add one to create a budget row.
                   </td>
                 </tr>
               ) : (
@@ -243,7 +192,6 @@ export default function BudgetSection({
                   {posts.map(post => {
                     const amounts = getMonthlyAmounts(post)
                     const yearTotal = amounts.reduce((a, b) => a + b, 0)
-                    const isDragOver = dragOverId === post.id
                     return (
                       <tr
                         key={post.id}
@@ -251,39 +199,26 @@ export default function BudgetSection({
                         onDragStart={e => handleDragStart(e, post.id)}
                         onDragEnd={handleDragEnd}
                         onDragOver={e => handleDragOver(e, post.id)}
-                        onDragLeave={handleDragLeave}
+                        onDragLeave={() => setDragOverId(null)}
                         onDrop={e => handleDrop(e, post.id)}
-                        className={isDragOver ? 'drag-over' : ''}
+                        className={dragOverId === post.id ? 'drag-over' : ''}
                       >
                         <td>
                           <div className="flex items-center gap-1.5">
                             {post.icon && <i style={{ fontStyle: 'normal', marginRight: 2 }}>{post.icon}</i>}
                             <span style={{ color: theme.text }}>{post.name}</span>
-                            <span
-                              className="text-xs px-1.5 py-0.5 rounded"
-                              style={{
-                                background: theme.surface,
-                                color: theme.text2,
-                                border: `1px solid ${theme.border}`,
-                                fontSize: '0.7rem',
-                              }}
-                            >
-                              {FREQ_LABEL[post.frequency]}
-                            </span>
+                            <Pill active={false}>{FREQ_LABEL[post.frequency]}</Pill>
                             <span className="post-actions">
+                              <Button className="h-6 px-2" type="button" size="sm" variant="ghost" onClick={() => onEditPost(post.id)}>
+                                Edit
+                              </Button>
                               <button
-                                style={{ ...btnIconStyle, width: 24, height: 24 }}
-                                onClick={() => onEditPost(post.id)}
-                                title="Edit"
-                              >
-                                ✎
-                              </button>
-                              <button
-                                style={{ ...btnIconStyle, width: 24, height: 24 }}
+                                type="button"
+                                className="h-6 rounded-lg px-2 text-xs font-semibold hover:opacity-80"
+                                style={{ color: theme.red }}
                                 onClick={() => handleDeletePost(post.id)}
-                                title="Delete"
                               >
-                                ×
+                                Delete
                               </button>
                             </span>
                           </div>
@@ -291,11 +226,7 @@ export default function BudgetSection({
                         {amounts.map((amt, i) => {
                           const isEditing = editingCell?.postId === post.id && editingCell.monthIdx === i
                           return (
-                            <td
-                              key={i}
-                              className={`editable-cell ${amt === 0 ? 'cell-zero' : ''}`}
-                              onDoubleClick={() => handleDblClick(post, i)}
-                            >
+                            <td key={i} className={`editable-cell ${amt === 0 ? 'cell-zero' : ''}`} onDoubleClick={() => handleDblClick(post, i)}>
                               {isEditing ? (
                                 <input
                                   type="number"
@@ -325,10 +256,9 @@ export default function BudgetSection({
                   })}
                   <tr className="total-row">
                     <td>Subtotal</td>
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const total = posts.reduce((sum, p) => sum + getMonthlyAmounts(p)[i], 0)
-                      return <td key={i}>{fmt(total, state.settings)}</td>
-                    })}
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <td key={i}>{fmt(posts.reduce((sum, p) => sum + getMonthlyAmounts(p)[i], 0), state.settings)}</td>
+                    ))}
                     <td>{fmt(sectionTotal, state.settings)}</td>
                   </tr>
                 </>
@@ -337,6 +267,23 @@ export default function BudgetSection({
           </table>
         </div>
       )}
+      <ConfirmDialog
+        open={customScheduleTarget !== null}
+        title="Use custom schedule"
+        message={`This will change "${customScheduleTarget?.post.name || 'this post'}" to a custom schedule so you can set individual month amounts.`}
+        confirmLabel="Continue"
+        onConfirm={convertToCustomSchedule}
+        onClose={() => setCustomScheduleTarget(null)}
+      />
+      <ConfirmDialog
+        open={deletePostId !== null}
+        title="Delete budget post"
+        message="This budget post will be removed from the year."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={confirmDeletePost}
+        onClose={() => setDeletePostId(null)}
+      />
     </div>
   )
 }

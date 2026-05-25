@@ -31,7 +31,7 @@ ENV DATA_DIR=/app/data
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=5m --timeout=5s --start-period=10s --retries=3 \
   CMD wget --spider -q http://localhost:3000/api/health || exit 1
 
 CMD ["node", "server/dist/index.js"]

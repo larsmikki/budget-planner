@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { Section, Post } from '@/types'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
 import { generateId, getSortedSections } from '@/utils'
 import { ICONS, MONTH_FULL } from '@/data/constants'
+import { Button, ConfirmDialog, Input, Modal, Select } from '@/components/ui'
 
 interface PostModalProps {
   open: boolean
@@ -11,6 +12,8 @@ interface PostModalProps {
   defaultSectionId: string
   onClose: () => void
 }
+
+const labelClass = 'block text-xs uppercase tracking-wider font-semibold text-text2 mb-1'
 
 export default function PostModal({ open, postId, defaultSectionId, onClose }: PostModalProps) {
   const { theme } = useTheme()
@@ -24,6 +27,7 @@ export default function PostModal({ open, postId, defaultSectionId, onClose }: P
   const [sectionId, setSectionId] = useState(defaultSectionId)
   const [icon, setIcon] = useState('')
   const [iconSearch, setIconSearch] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const isEdit = postId !== null
 
@@ -63,236 +67,116 @@ export default function PostModal({ open, postId, defaultSectionId, onClose }: P
       customMonths: frequency === 'custom' ? customMonths : [],
       icon,
     }
-    if (isEdit) {
-      updateState({ posts: state.posts.map(p => p.id === postId ? post : p) })
-    } else {
-      updateState({ posts: [...state.posts, post] })
-    }
+    updateState({ posts: isEdit ? state.posts.map(p => p.id === postId ? post : p) : [...state.posts, post] })
     onClose()
   }
 
   const handleDelete = () => {
     if (!isEdit) return
-    if (confirm('Delete this budget post?')) {
-      updateState({ posts: state.posts.filter(p => p.id !== postId) })
-      onClose()
-    }
+    updateState({ posts: state.posts.filter(p => p.id !== postId) })
+    onClose()
   }
 
   const toggleCustomMonth = (m: number) => {
-    setCustomMonths(prev =>
-      prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
-    )
+    setCustomMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
   }
-
-  const showStartMonth = frequency !== 'monthly' && frequency !== 'custom'
-  const showCustomMonths = frequency === 'custom'
 
   const filteredIcons = (() => {
     const f = iconSearch.toLowerCase()
     const list = f ? ICONS.filter(ic => ic.name.includes(f)) : ICONS
     const seen = new Set<string>()
-    return list.filter(ic => { if (seen.has(ic.ch)) return false; seen.add(ic.ch); return true })
+    return list.filter(ic => {
+      if (seen.has(ic.ch)) return false
+      seen.add(ic.ch)
+      return true
+    })
   })()
 
   const sortedSections: Section[] = getSortedSections(state.sections)
 
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'var(--overlay)',
-    zIndex: 200,
-    display: open ? 'flex' : 'none',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-
-  const modalStyle: React.CSSProperties = {
-    background: theme.surface,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: 28,
-    width: 460,
-    maxWidth: '95vw',
-    boxShadow: 'var(--shadow)',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 12px',
-    background: theme.surface2,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 8,
-    color: theme.text,
-    fontSize: '0.9rem',
-    fontFamily: 'inherit',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '0.8rem',
-    color: theme.text2,
-    marginBottom: 6,
-  }
-
   return (
-    <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={modalStyle}>
-        <h3 style={{ marginBottom: 20, fontSize: '1.1rem', color: theme.text }}>
-          {isEdit ? 'Edit Budget Post' : 'Add Budget Post'}
-        </h3>
-
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>Name</label>
-          <input
-            style={inputStyle}
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="e.g. Rent, Netflix, Salary..."
-            autoFocus={!isEdit}
-          />
+    <Modal open={open} title={isEdit ? 'Edit budget post' : 'Add budget post'} onClose={onClose} maxWidth="520px">
+      <div>
+        <div className="mb-4">
+          <label className={labelClass}>Name</label>
+          <Input value={name} onChange={e => setName(e.target.value)} placeholder="Rent, Netflix, salary" autoFocus={!isEdit} />
         </div>
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-          <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Amount</label>
-            <input
-              style={inputStyle}
-              type="number"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              placeholder="0"
-              min="0"
-              step="0.01"
-            />
+        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>Amount</label>
+            <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" min="0" step="0.01" />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Frequency</label>
-            <select
-              style={inputStyle}
-              value={frequency}
-              onChange={e => setFrequency(e.target.value as Post['frequency'])}
-            >
+          <div>
+            <label className={labelClass}>Frequency</label>
+            <Select value={frequency} onChange={e => setFrequency(e.target.value as Post['frequency'])}>
               <option value="monthly">Monthly</option>
               <option value="quarterly">Quarterly</option>
               <option value="biannual">Every 6 months</option>
               <option value="yearly">Yearly</option>
               <option value="custom">Custom months</option>
-            </select>
+            </Select>
           </div>
         </div>
 
-        {showStartMonth && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Start / Payment Month</label>
-            <select
-              style={inputStyle}
-              value={startMonth}
-              onChange={e => setStartMonth(parseInt(e.target.value))}
-            >
+        {frequency !== 'monthly' && frequency !== 'custom' && (
+          <div className="mb-4">
+            <label className={labelClass}>Start month</label>
+            <Select value={startMonth} onChange={e => setStartMonth(parseInt(e.target.value))}>
               {MONTH_FULL.map((m, i) => <option key={i} value={i}>{m}</option>)}
-            </select>
+            </Select>
           </div>
         )}
 
-        {showCustomMonths && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Select Months</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {frequency === 'custom' && (
+          <div className="mb-4">
+            <label className={labelClass}>Months</label>
+            <div className="flex flex-wrap gap-1.5">
               {MONTH_FULL.map((m, i) => (
-                <label
-                  key={i}
+                <button
+                  key={m}
+                  type="button"
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold hover:opacity-80"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '4px 8px',
-                    background: theme.surface2,
-                    borderRadius: 4,
-                    cursor: 'pointer',
-                    fontSize: '0.82rem',
-                    color: theme.text,
+                    background: customMonths.includes(i) ? `${theme.accent}18` : theme.surface2,
+                    border: `1px solid ${customMonths.includes(i) ? theme.accent : theme.border}`,
+                    color: customMonths.includes(i) ? theme.accent : theme.text,
                   }}
+                  onClick={() => toggleCustomMonth(i)}
                 >
-                  <input
-                    type="checkbox"
-                    checked={customMonths.includes(i)}
-                    onChange={() => toggleCustomMonth(i)}
-                  />
                   {m.substring(0, 3)}
-                </label>
+                </button>
               ))}
             </div>
           </div>
         )}
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>Section</label>
-          <select
-            style={inputStyle}
-            value={sectionId}
-            onChange={e => setSectionId(e.target.value)}
-          >
+        <div className="mb-4">
+          <label className={labelClass}>Section</label>
+          <Select value={sectionId} onChange={e => setSectionId(e.target.value)}>
             {sortedSections.map(sec => (
               <option key={sec.id} value={sec.id}>{sec.name} ({sec.type})</option>
             ))}
-          </select>
+          </Select>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>Icon (optional)</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: '1.3rem', width: 32, textAlign: 'center' }}>{icon}</span>
-            <button
-              type="button"
-              style={{
-                padding: '4px 10px',
-                background: theme.surface2,
-                border: `1px solid ${theme.border}`,
-                borderRadius: 8,
-                color: theme.text,
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-                fontFamily: 'inherit',
-              }}
-              onClick={() => setIcon('')}
-            >
-              Clear
-            </button>
+        <div className="mb-4">
+          <label className={labelClass}>Icon</label>
+          <div className="mb-2 flex items-center gap-2">
+            <span className="w-8 text-center text-xl">{icon}</span>
+            <Button type="button" size="sm" onClick={() => setIcon('')}>Clear</Button>
           </div>
-          <input
-            type="text"
-            value={iconSearch}
-            onChange={e => setIconSearch(e.target.value)}
-            placeholder="Search icons..."
-            style={{
-              ...inputStyle,
-              marginBottom: 8,
-              fontSize: '0.85rem',
-            }}
-          />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2, maxHeight: 160, overflowY: 'auto' }}>
+          <Input value={iconSearch} onChange={e => setIconSearch(e.target.value)} placeholder="Search icons" className="mb-2" />
+          <div className="flex max-h-40 flex-wrap gap-1 overflow-y-auto">
             {filteredIcons.map((ic, idx) => (
               <button
-                key={idx}
+                key={`${ic.ch}-${idx}`}
                 type="button"
                 title={ic.name}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-lg hover:opacity-80"
                 style={{
-                  width: 32,
-                  height: 32,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   background: icon === ic.ch ? `${theme.accent}22` : theme.surface2,
                   border: `1px solid ${icon === ic.ch ? theme.accent : theme.border}`,
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  padding: 0,
-                  fontFamily: 'inherit',
                 }}
                 onClick={() => setIcon(ic.ch)}
               >
@@ -302,57 +186,21 @@ export default function PostModal({ open, postId, defaultSectionId, onClose }: P
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
-          <button
-            style={{
-              padding: '8px 16px',
-              background: theme.surface2,
-              border: `1px solid ${theme.border}`,
-              borderRadius: 8,
-              color: theme.text,
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontFamily: 'inherit',
-            }}
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          {isEdit && (
-            <button
-              style={{
-                padding: '8px 16px',
-                background: 'transparent',
-                border: `1px solid ${theme.red}`,
-                borderRadius: 8,
-                color: theme.red,
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontFamily: 'inherit',
-              }}
-              onClick={handleDelete}
-            >
-              Delete
-            </button>
-          )}
-          <button
-            style={{
-              padding: '8px 16px',
-              background: theme.gradient,
-              border: 'none',
-              borderRadius: 8,
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontFamily: 'inherit',
-              fontWeight: 500,
-            }}
-            onClick={handleSave}
-          >
-            Save
-          </button>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button onClick={onClose}>Cancel</Button>
+          {isEdit && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
+          <Button variant="primary" onClick={handleSave}>Save</Button>
         </div>
       </div>
-    </div>
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete budget post"
+        message="This budget post will be removed from the year."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDelete}
+        onClose={() => setDeleteOpen(false)}
+      />
+    </Modal>
   )
 }
