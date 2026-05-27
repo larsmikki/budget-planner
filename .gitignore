@@ -11,3 +11,17 @@ node_modules/
 
 # Build output
 dist/
+
+# === Fleet structure baseline (shared/STRUCTURE.md §7) ===
+.env.*
+*.bat
+dist-server
+dist-server.js
+*.tsbuildinfo
+*.db
+cache/
+temp/
+test_album/
+logs
+.DS_Store
+Thumbs.db

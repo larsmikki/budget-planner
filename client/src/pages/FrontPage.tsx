@@ -10,6 +10,18 @@ import SectionModal from '@/components/SectionModal'
 import QuickSetupModal from '@/components/QuickSetupModal'
 import { Button, Surface } from '@/components/ui'
 
+// Running balance per month. Kept at module scope (a pure helper) so the
+// single-pass accumulator isn't a render-time mutation.
+function cumulativeBalances(income: number[], expense: number[]): number[] {
+  const out: number[] = []
+  let run = 0
+  for (let i = 0; i < income.length; i++) {
+    run += income[i] - expense[i]
+    out.push(run)
+  }
+  return out
+}
+
 export default function FrontPage() {
   const { theme } = useTheme()
   const { state } = useBudget()
@@ -167,17 +179,11 @@ export default function FrontPage() {
               </tr>
               <tr className="total-row">
                 <td>Cumulative</td>
-                {(() => {
-                  let cumul = 0
-                  return incomeMonths.map((_, i) => {
-                    cumul += incomeMonths[i] - expenseMonths[i]
-                    return (
-                      <td key={i} style={{ color: cumul >= 0 ? theme.green : theme.red }}>
-                        {cumul !== 0 ? (cumul >= 0 ? '+' : '') + fmt(cumul, state.settings) : fmt(0, state.settings)}
-                      </td>
-                    )
-                  })
-                })()}
+                {cumulativeBalances(incomeMonths, expenseMonths).map((cumul, i) => (
+                  <td key={i} style={{ color: cumul >= 0 ? theme.green : theme.red }}>
+                    {cumul !== 0 ? (cumul >= 0 ? '+' : '') + fmt(cumul, state.settings) : fmt(0, state.settings)}
+                  </td>
+                ))}
                 <td></td>
               </tr>
             </tbody>

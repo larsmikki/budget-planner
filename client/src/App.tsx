@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ThemeProvider } from '@/contexts/ThemeContext'
-import { BudgetProvider } from '@/contexts/BudgetContext'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
+import { BudgetProvider } from '@/contexts/BudgetProvider'
 import Layout from '@/components/Layout'
 import FrontPage from '@/pages/FrontPage'
 import SettingsPage from '@/pages/SettingsPage'

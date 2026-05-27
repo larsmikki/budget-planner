@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
 import { generateId } from '@/utils'
@@ -11,18 +11,17 @@ interface QuickSetupModalProps {
   onClose: () => void
 }
 
+const getInitialChecked = () => {
+  const initial = new Set<string>()
+  QUICK_TEMPLATES.income.forEach((_, i) => initial.add(`income:${i}`))
+  QUICK_TEMPLATES.expense.forEach((_, i) => initial.add(`expense:${i}`))
+  return initial
+}
+
 export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps) {
   const { theme } = useTheme()
   const { state, updateState } = useBudget()
-  const [checked, setChecked] = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    if (!open) return
-    const initial = new Set<string>()
-    QUICK_TEMPLATES.income.forEach((_, i) => initial.add(`income:${i}`))
-    QUICK_TEMPLATES.expense.forEach((_, i) => initial.add(`expense:${i}`))
-    setChecked(initial)
-  }, [open])
+  const [checked, setChecked] = useState<Set<string>>(getInitialChecked)
 
   const toggle = (key: string) => {
     setChecked(prev => {
@@ -54,6 +53,7 @@ export default function QuickSetupModal({ open, onClose }: QuickSetupModalProps)
     })
 
     updateState({ posts: [...state.posts, ...newPosts] })
+    setChecked(getInitialChecked())
     onClose()
   }
 

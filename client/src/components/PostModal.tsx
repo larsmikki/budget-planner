@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Section, Post } from '@/types'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
@@ -16,44 +16,37 @@ interface PostModalProps {
 const labelClass = 'block text-xs uppercase tracking-wider font-semibold text-text2 mb-1'
 
 export default function PostModal({ open, postId, defaultSectionId, onClose }: PostModalProps) {
+  const isEdit = postId !== null
+  const formKey = `${postId ?? 'new'}:${defaultSectionId}`
+
+  return (
+    <Modal open={open} title={isEdit ? 'Edit budget post' : 'Add budget post'} onClose={onClose} maxWidth="520px">
+      <PostModalFields
+        key={formKey}
+        postId={postId}
+        defaultSectionId={defaultSectionId}
+        onClose={onClose}
+      />
+    </Modal>
+  )
+}
+
+function PostModalFields({ postId, defaultSectionId, onClose }: Omit<PostModalProps, 'open'>) {
   const { theme } = useTheme()
   const { state, updateState } = useBudget()
+  const editPost = postId ? state.posts.find(p => p.id === postId) : undefined
 
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [frequency, setFrequency] = useState<Post['frequency']>('monthly')
-  const [startMonth, setStartMonth] = useState(0)
-  const [customMonths, setCustomMonths] = useState<number[]>([])
-  const [sectionId, setSectionId] = useState(defaultSectionId)
-  const [icon, setIcon] = useState('')
+  const [name, setName] = useState(editPost?.name ?? '')
+  const [amount, setAmount] = useState(editPost ? String(editPost.amount) : '')
+  const [frequency, setFrequency] = useState<Post['frequency']>(editPost?.frequency ?? 'monthly')
+  const [startMonth, setStartMonth] = useState(editPost?.startMonth ?? 0)
+  const [customMonths, setCustomMonths] = useState<number[]>(editPost?.customMonths ?? [])
+  const [sectionId, setSectionId] = useState(editPost?.sectionId ?? defaultSectionId)
+  const [icon, setIcon] = useState(editPost?.icon ?? '')
   const [iconSearch, setIconSearch] = useState('')
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const isEdit = postId !== null
-
-  useEffect(() => {
-    if (!open) return
-    if (isEdit) {
-      const post = state.posts.find(p => p.id === postId)
-      if (!post) return
-      setName(post.name)
-      setAmount(String(post.amount))
-      setFrequency(post.frequency)
-      setStartMonth(post.startMonth || 0)
-      setCustomMonths(post.customMonths || [])
-      setSectionId(post.sectionId)
-      setIcon(post.icon || '')
-    } else {
-      setName('')
-      setAmount('')
-      setFrequency('monthly')
-      setStartMonth(0)
-      setCustomMonths([])
-      setSectionId(defaultSectionId)
-      setIcon('')
-    }
-    setIconSearch('')
-  }, [open, postId, isEdit, defaultSectionId, state.posts])
 
   const handleSave = () => {
     if (!name.trim()) return
@@ -95,7 +88,7 @@ export default function PostModal({ open, postId, defaultSectionId, onClose }: P
   const sortedSections: Section[] = getSortedSections(state.sections)
 
   return (
-    <Modal open={open} title={isEdit ? 'Edit budget post' : 'Add budget post'} onClose={onClose} maxWidth="520px">
+    <>
       <div>
         <div className="mb-4">
           <label className={labelClass}>Name</label>
@@ -201,6 +194,6 @@ export default function PostModal({ open, postId, defaultSectionId, onClose }: P
         onConfirm={handleDelete}
         onClose={() => setDeleteOpen(false)}
       />
-    </Modal>
+    </>
   )
 }

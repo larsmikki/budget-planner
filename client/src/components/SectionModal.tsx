@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useBudget } from '@/contexts/BudgetContext'
 import { generateId } from '@/utils'
@@ -13,28 +13,24 @@ interface SectionModalProps {
 const labelClass = 'block text-xs uppercase tracking-wider font-semibold text-text2 mb-1'
 
 export default function SectionModal({ open, sectionId, onClose }: SectionModalProps) {
-  const { theme } = useTheme()
-  const { state, updateState } = useBudget()
-  const [name, setName] = useState('')
-  const [type, setType] = useState<'income' | 'expense'>('expense')
-  const [color, setColor] = useState('')
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const isEdit = sectionId !== null
 
-  useEffect(() => {
-    if (!open) return
-    if (isEdit) {
-      const sec = state.sections.find(s => s.id === sectionId)
-      if (!sec) return
-      setName(sec.name)
-      setType(sec.type)
-      setColor(sec.color || '')
-    } else {
-      setName('')
-      setType('expense')
-      setColor('')
-    }
-  }, [open, sectionId, isEdit, state.sections])
+  return (
+    <Modal open={open} title={isEdit ? 'Edit section' : 'Add section'} onClose={onClose} maxWidth="420px">
+      <SectionModalFields key={sectionId ?? 'new'} sectionId={sectionId} onClose={onClose} />
+    </Modal>
+  )
+}
+
+function SectionModalFields({ sectionId, onClose }: Omit<SectionModalProps, 'open'>) {
+  const { theme } = useTheme()
+  const { state, updateState } = useBudget()
+  const editSection = sectionId ? state.sections.find(s => s.id === sectionId) : undefined
+  const [name, setName] = useState(editSection?.name ?? '')
+  const [type, setType] = useState<'income' | 'expense'>(editSection?.type ?? 'expense')
+  const [color, setColor] = useState(editSection?.color ?? '')
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const isEdit = sectionId !== null
 
   const handleSave = () => {
     if (!name.trim()) return
@@ -72,7 +68,7 @@ export default function SectionModal({ open, sectionId, onClose }: SectionModalP
   }
 
   return (
-    <Modal open={open} title={isEdit ? 'Edit section' : 'Add section'} onClose={onClose} maxWidth="420px">
+    <>
       <div>
         <div className="mb-4">
           <label className={labelClass}>Section name</label>
@@ -127,6 +123,6 @@ export default function SectionModal({ open, sectionId, onClose }: SectionModalP
         onConfirm={handleDelete}
         onClose={() => setDeleteOpen(false)}
       />
-    </Modal>
+    </>
   )
 }
