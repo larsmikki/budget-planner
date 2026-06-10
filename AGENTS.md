@@ -5,7 +5,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 ## Running the Application
 
 ```bash
-npm run dev        # Start both client (port 3020) and server (port 3021)
+npm run dev        # Start both client (port 3000) and server (port 3001)
 npm run build      # Production build
 npm start          # Start production server (port 3000)
 ```
@@ -13,12 +13,12 @@ npm start          # Start production server (port 3000)
 **Docker:**
 ```bash
 docker compose up      # Start with persistent volume (port 3000)
-docker build -t budgety .  # Build image
+docker build -t budget-planner .  # Build image
 ```
 
 ## Architecture
 
-Monorepo with client/server workspaces — same structure as other apps (prompty, linky, etc.).
+Monorepo with client/server workspaces — same structure as other apps (prompty, linkpad, etc.).
 
 - **`server/`** — Express + TypeScript. Two API endpoints: `GET /api/state` and `PUT /api/state`. Persists data to `data/budget.json`.
 - **`client/`** — React 19 + Vite 8 + Tailwind CSS 4 + TypeScript SPA.
@@ -71,11 +71,10 @@ On load: `GET /api/state` → BudgetContext → render
 - Settings/Donate pages use `max-w-2xl mx-auto` — budget tables must NOT be constrained (they need full width + horizontal scroll)
 - Theme colors on React components use inline `style={{}}` props, not Tailwind color classes
 
-## No Tests
+## Tests
 
-Verification is done manually in the browser.
+`npm test` runs Vitest for both workspaces (server API + static-serving tests in `server/src/app.test.ts`, client unit tests). UI changes are additionally verified manually in the browser.
 
 ## Notes
 
 - The `data/` directory is auto-created on first write; excluded from Docker image.
-- Old `index.html` and `serve.js` remain as legacy reference — not used.

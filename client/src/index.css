@@ -45,6 +45,7 @@
   background: var(--theme-surface2);
   z-index: 2;
   min-width: 200px;
+  overflow: hidden;
 }
 
 .budget-table th:first-child {
@@ -110,9 +111,19 @@
 }
 
 .post-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
+  align-items: center;
   gap: 2px;
   visibility: hidden;
+  padding: 2px 4px;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card-soft), -10px 0 8px var(--theme-surface2);
 }
 
 .budget-table tr:hover .post-actions {

@@ -1,8 +1,8 @@
-# Budgety
+# Budget Planner
 
 A self-hosted annual budget planner. Track income and expenses across custom sections with monthly breakdowns, running balances, and cumulative totals.
 
-![Budgety screenshot](screenshot.png)
+![Budget Planner screenshot](screenshot.png)
 
 ## Getting started
 
@@ -14,39 +14,41 @@ Works on Synology, Unraid, TrueNAS, QNAP, Proxmox, or a plain Docker host.
 
 ```bash
 docker run -d \
-  --name budgety \
+  --name budget-planner \
   -p 3000:3000 \
-  -v budgety-data:/app/data \
+  -v budget-planner-data:/app/data \
   --restart unless-stopped \
-  larsmikki/budgety:latest
+  larsmikki/budget-planner:latest
 ```
 
 Or with Compose:
 
 ```yaml
 services:
-  budgety:
-    image: larsmikki/budgety:latest
-    container_name: budgety
+  budget-planner:
+    image: larsmikki/budget-planner:latest
+    container_name: budget-planner
     ports:
       - "3000:3000"
     volumes:
-      - budgety-data:/app/data
+      - budget-planner-data:/app/data
     restart: unless-stopped
 
 volumes:
-  budgety-data:
+  budget-planner-data:
 ```
 
-To build the image locally instead: `docker build -t budgety . && docker run -p 3000:3000 -v budgety-data:/app/data budgety`.
+To build the image locally instead: `docker build -t budget-planner . && docker run -p 3000:3000 -v budget-planner-data:/app/data budget-planner`.
+
+> **Upgrading from Budgety?** This app was previously published as `larsmikki/budgety`. The image, container, and volume names have changed. Your budget lives in the old `budgety-data` volume — either keep `budgety-data` as the volume name in your compose file, or copy its contents into `budget-planner-data` before switching. Your saved theme preference resets once.
 
 ### 2. Local install on Windows
 
 Requires [Git for Windows](https://git-scm.com/download/win) and [Node.js 20+](https://nodejs.org/).
 
 ```powershell
-git clone https://github.com/larsmikki/budgety.git
-cd budgety
+git clone https://github.com/larsmikki/budget-planner.git
+cd budget-planner
 npm install
 npm run dev
 ```
@@ -57,8 +59,8 @@ For a production build: `npm run build && npm start`.
 
 ```bash
 brew install node git
-git clone https://github.com/larsmikki/budgety.git
-cd budgety
+git clone https://github.com/larsmikki/budget-planner.git
+cd budget-planner
 npm install
 npm run dev
 ```
@@ -73,8 +75,8 @@ Debian/Ubuntu:
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs git
 
-git clone https://github.com/larsmikki/budgety.git
-cd budgety
+git clone https://github.com/larsmikki/budget-planner.git
+cd budget-planner
 npm install
 npm run dev
 ```
@@ -98,6 +100,10 @@ For a production build: `npm run build && npm start`.
 
 ## Tech stack
 
-- Single-file frontend (`index.html`) — vanilla HTML/CSS/JS, no build step
-- Node.js HTTP server (`serve.js`) — static files + JSON REST API
-- Zero dependencies
+Monorepo with npm workspaces:
+
+- **`client/`** — React 19 + Vite 8 + Tailwind CSS 4 + TypeScript SPA
+- **`server/`** — Express + TypeScript REST API (`GET`/`PUT /api/state`), persisting to a flat `data/budget.json` — no database
+- **Dev** — Vite dev server on port 3000 with `/api` proxied to the server on 3001 (`npm run dev` starts both)
+- **Production** — single Express server on port 3000 serving the built client and the API (`npm run build && npm start`, or the Docker image)
+- **Tests** — Vitest for client and server (`npm test`)

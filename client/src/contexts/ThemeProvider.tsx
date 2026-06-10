@@ -3,7 +3,7 @@ import { ThemeContext, THEMES, type ThemeDefinition } from '@/contexts/ThemeCont
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeDefinition>(() => {
-    const stored = localStorage.getItem('budgety-theme')
+    const stored = localStorage.getItem('theme')
     if (!stored) return THEMES[0]
     if (stored === 'light') return THEMES.find(t => t.name === 'Default') || THEMES[0]
     if (stored === 'dark') return THEMES.find(t => t.name === 'Dark') || THEMES[0]
@@ -14,7 +14,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    localStorage.setItem('budgety-theme', theme.name)
+    localStorage.setItem('theme', theme.name)
 
     const root = document.documentElement
     root.classList.toggle('dark', theme.mode === 'dark')

@@ -8,7 +8,7 @@ import { createApp } from './app.js'
 let dataDir: string
 
 beforeAll(() => {
-  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'budgety-test-'))
+  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'))
 })
 
 afterAll(() => {
@@ -38,7 +38,7 @@ describe('GET /api/state', () => {
 
 describe('PUT /api/state + GET /api/state', () => {
   it('saves state and retrieves it', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'budgety-rw-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rw-'))
     try {
       const app = createApp({ dataDir: dir })
       const state = { year: 2025, sections: [{ id: 's1', name: 'Income', type: 'income' }], posts: [], collapsed: {}, settings: {} }
@@ -65,8 +65,8 @@ describe('Production static serving', () => {
   const original = process.env['NODE_ENV']
 
   beforeAll(() => {
-    clientDist = fs.mkdtempSync(path.join(os.tmpdir(), 'budgety-dist-'))
-    fs.writeFileSync(path.join(clientDist, 'index.html'), '<html><body>Budgety</body></html>')
+    clientDist = fs.mkdtempSync(path.join(os.tmpdir(), 'dist-'))
+    fs.writeFileSync(path.join(clientDist, 'index.html'), '<html><body>It works</body></html>')
     process.env['NODE_ENV'] = 'production'
   })
 
@@ -79,14 +79,14 @@ describe('Production static serving', () => {
     const app = createApp({ dataDir, clientDist })
     const res = await request(app).get('/')
     expect(res.status).toBe(200)
-    expect(res.text).toContain('Budgety')
+    expect(res.text).toContain('It works')
   })
 
   it('GET /any-spa-route falls back to index.html', async () => {
     const app = createApp({ dataDir, clientDist })
     const res = await request(app).get('/settings')
     expect(res.status).toBe(200)
-    expect(res.text).toContain('Budgety')
+    expect(res.text).toContain('It works')
   })
 
   it('GET /api/health still works in production mode', async () => {

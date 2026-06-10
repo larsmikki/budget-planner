@@ -1,5 +1,5 @@
 {
-  "name": "budgety-server",
+  "name": "budget-planner-server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
